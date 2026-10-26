@@ -1,8 +1,12 @@
+// Cseréld az importokat erre felül:
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './Home';
 import Lekotes from './Lekotes';
 import HalloweenPass from './HalloweenPass';
+import Auth from './Auth'; // <-- Ez az új import
 
+// És a <Routes> blokkba szúrd be ezt:
+<Route path="/auth" element={<Auth />} />
 export default function App() {
   return (
     <BrowserRouter>
@@ -11,6 +15,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/lekotes" element={<Lekotes />} />
           <Route path="/halloween-pass" element={<HalloweenPass />} />
+          <Route path="/auth" element={<Auth />} />
         </Routes>
         
         {/* Közös jogi nyilatkozat minden oldalon */}

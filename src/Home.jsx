@@ -8,6 +8,13 @@ export default function Home() {
       <h1>barni-seeRPG</h1>
       
       <button 
+            onClick={() => navigate('/auth')}
+            style={{ padding: '15px 30px', fontSize: '18px', cursor: 'pointer', backgroundColor: '#1e2128', color: 'white', border: '2px solid #00b0f4', borderRadius: '8px' }}
+          >
+            🔐 Bejelentkezés / Regisztráció
+      </button>
+
+      <button 
         onClick={() => navigate('/lekotes')}
         style={{ padding: '15px 30px', fontSize: '18px', cursor: 'pointer', backgroundColor: '#1e2128', color: 'white', border: '2px solid #4ade80', borderRadius: '8px' }}
       >
