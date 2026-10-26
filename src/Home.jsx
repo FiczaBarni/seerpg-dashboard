@@ -59,12 +59,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 💥 KÖZÉPSŐ TARTALOM (HERO) */}
-      <div style={styles.hero}>
-        <h1 style={styles.title}>Válaszd ki az alkalmazást</h1>
-        <p style={styles.subtitle}>Kezeld a lekötéseidet profi szinten, vagy kövesd nyomon a Halloween Pass fejlődésedet egyetlen felületen.</p>
-      </div>
-
       {/* 🃏 ALKALMAZÁS KÁRTYÁK */}
       <div style={styles.cardContainer}>
         
@@ -78,6 +72,9 @@ export default function Home() {
           <h3 style={styles.cardTitle}>Halloween Pass</h3>
         </div>
 
+      </div>
+            <div style={styles.footer}>
+        @FICZABARNI
       </div>
     </div>
   );

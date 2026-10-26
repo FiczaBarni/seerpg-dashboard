@@ -10,10 +10,10 @@ export default function Lekotes() {
   const [loading, setLoading] = useState(true); // Töltés állapot, hogy ne írja felül az adatbázist betöltés előtt
   
   // --- ÁLLAPOTOK (Alapértelmezett értékekkel) ---
-  const [primeCapital, setPrimeCapital] = useState(823207955);
-  const [primeHours, setPrimeHours] = useState(12);
-  const [targetStartCapital, setTargetStartCapital] = useState(823207955);
-  const [targetGoal, setTargetGoal] = useState(1000000000);
+  const [primeCapital, setPrimeCapital] = useState(0);
+  const [primeHours, setPrimeHours] = useState(0);
+  const [targetStartCapital, setTargetStartCapital] = useState(0);
+  const [targetGoal, setTargetGoal] = useState(0);
 
   // --- 1. FIREBASE: FELHASZNÁLÓ ÉS ADATOK BETÖLTÉSE ---
   useEffect(() => {
@@ -249,10 +249,6 @@ export default function Lekotes() {
           </div>
         </div>
 
-      </div>
-      
-      <div style={styles.footer}>
-        @FICZABARNI
       </div>
     </div>
   );
