@@ -32,7 +32,8 @@ export default function Home() {
     cardContainer: { display: 'flex', gap: '30px', flexWrap: 'wrap', justifyContent: 'center' },
     card: (borderColor) => ({ backgroundColor: '#1e2128', borderTop: `5px solid ${borderColor}`, borderRadius: '16px', padding: '50px 40px', width: '260px', textAlign: 'center', cursor: 'pointer', boxShadow: '0 15px 35px rgba(0,0,0,0.4)', transition: 'transform 0.2s' }),
     cardIcon: { fontSize: '4rem', marginBottom: '20px' },
-    cardTitle: { fontSize: '1.6rem', fontWeight: 'bold', margin: 0, color: '#fff' }
+    cardTitle: { fontSize: '1.6rem', fontWeight: 'bold', margin: 0, color: '#fff' },
+    footer: { position: 'absolute', bottom: '20px', color: 'rgba(255,255,255,0.05)', fontSize: '2.5rem', fontWeight: '900', letterSpacing: '12px', textTransform: 'uppercase', pointerEvents: 'none', userSelect: 'none' }
   };
 
   return (
@@ -73,7 +74,9 @@ export default function Home() {
         </div>
 
       </div>
-            <div style={styles.footer}>
+
+      {/* VÍZJEL CSAK A FŐOLDALON */}
+      <div style={styles.footer}>
         @FICZABARNI
       </div>
     </div>

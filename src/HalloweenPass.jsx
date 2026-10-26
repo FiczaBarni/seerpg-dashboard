@@ -218,10 +218,6 @@ export default function HalloweenPass() {
         </div>
 
       </div>
-      
-      <div style={styles.footer}>
-        @FICZABARNI
-      </div>
     </div>
   );
 }
