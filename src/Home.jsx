@@ -72,7 +72,10 @@ export default function Home() {
           <div style={styles.cardIcon}>🎃</div>
           <h3 style={styles.cardTitle}>Halloween Pass</h3>
         </div>
-
+        <div onClick={() => navigate('/loot')} style={styles.card('#a78bfa')}>
+          <div style={styles.cardIcon}>🎁</div>
+          <h3 style={styles.cardTitle}>Láda Logger</h3>
+        </div>
       </div>
 
       {/* VÍZJEL CSAK A FŐOLDALON */}
