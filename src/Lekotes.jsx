@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function SeeRPGDashboard() {
+  const navigate = useNavigate();
+
   // --- ÁLLAPOTOK (LocalStorage betöltéssel) ---
   
   // 1. Kártya: PrimeInvest Hosszútáv
@@ -26,7 +29,6 @@ export default function SeeRPGDashboard() {
   useEffect(() => localStorage.setItem("seeRpgTargetGoal", targetGoal), [targetGoal]);
 
   // --- SZÁMÍTÁSOK: 1. KÁRTYA ---
-  // Kamatos kamat: Tőke * (1 + 0.006)^Órák
   const primeFinalBalance = Math.floor(primeCapital * Math.pow(1.006, primeHours));
   const primeProfit = primeFinalBalance - primeCapital;
   const primeCycles = (primeHours / 12).toFixed(1);
@@ -37,13 +39,10 @@ export default function SeeRPGDashboard() {
   let actualFinalBalance = 0;
   
   if (targetGoal > targetStartCapital && targetStartCapital > 0) {
-    // Kiszámoljuk a szükséges órákat logaritmussal
     requiredHours = Math.log(targetGoal / targetStartCapital) / Math.log(1.006);
     requiredCyclesExact = requiredHours / 12;
     
-    // Mivel csak teljes 12 órás köröket tudunk futtatni, felfelé kerekítjük
     const roundedCycles = Math.ceil(requiredCyclesExact);
-    // Kiszámoljuk, mennyi lesz a pénz a legutolsó teljes kör végén
     actualFinalBalance = Math.floor(targetStartCapital * Math.pow(1.006, roundedCycles * 12));
   }
   
@@ -68,8 +67,8 @@ export default function SeeRPGDashboard() {
 
   // --- STÍLUSOK ---
   const styles = {
-    container: { boxSizing: "border-box", fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", backgroundColor: "#1e1e24", color: "#d1d5db", padding: "40px 20px", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center" },
-    titleContainer: { textAlign: "center", marginBottom: "40px" },
+    container: { position: "relative", boxSizing: "border-box", fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", backgroundColor: "#1e1e24", color: "#d1d5db", padding: "40px 20px", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center" },
+    titleContainer: { textAlign: "center", marginBottom: "40px", marginTop: "20px" },
     titleSee: { color: "#eeb32a", textShadow: "2px 2px 0px #111, 4px 4px 0px rgba(0,0,0,0.4)", fontSize: "2.8rem", fontWeight: "900", letterSpacing: "1px" },
     titleRPG: { color: "#ffffff", textShadow: "2px 2px 0px #111, 4px 4px 0px rgba(0,0,0,0.4)", fontSize: "2.8rem", fontWeight: "900", letterSpacing: "1px" },
     titleText: { color: "#a1a5ab", textShadow: "1px 1px 2px #000", fontSize: "2.2rem", fontWeight: "bold" },
@@ -90,6 +89,15 @@ export default function SeeRPGDashboard() {
 
   return (
     <div style={styles.container}>
+      
+      {/* Vissza gomb a bal felső sarokban */}
+      <button 
+        onClick={() => navigate('/')} 
+        style={{ position: 'absolute', top: '20px', left: '20px', padding: '8px 15px', cursor: 'pointer', backgroundColor: '#333', color: 'white', border: 'none', borderRadius: '5px', zIndex: 1000 }}
+      >
+        ⬅ Home page
+      </button>
+
       <div style={styles.titleContainer}>
         <h1>
           🏦 <span style={styles.titleSee}>See</span><span style={styles.titleRPG}>RPG</span> <span style={styles.titleText}>Lekötés</span>

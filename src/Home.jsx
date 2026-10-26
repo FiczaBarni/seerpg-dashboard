@@ -5,13 +5,13 @@ export default function Home() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: '20px', color: 'white' }}>
-      <h1>Melyik alkalmazást szeretnéd megnyitni?</h1>
+      <h1>barni-seeRPG</h1>
       
       <button 
         onClick={() => navigate('/lekotes')}
         style={{ padding: '15px 30px', fontSize: '18px', cursor: 'pointer', backgroundColor: '#1e2128', color: 'white', border: '2px solid #4ade80', borderRadius: '8px' }}
       >
-        💰 SeeRPG Lekötés
+        💰 Lekötés
       </button>
 
       <button 

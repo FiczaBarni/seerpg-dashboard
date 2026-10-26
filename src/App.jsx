@@ -6,16 +6,26 @@ import HalloweenPass from './HalloweenPass';
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Főoldal a két gombbal */}
-        <Route path="/" element={<Home />} />
+      <div style={{ position: 'relative', minHeight: '100vh' }}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/lekotes" element={<Lekotes />} />
+          <Route path="/halloween-pass" element={<HalloweenPass />} />
+        </Routes>
         
-        {/* Régi lekötés oldal */}
-        <Route path="/lekotes" element={<Lekotes />} />
-        
-        {/* Új halloween oldal */}
-        <Route path="/halloween-pass" element={<HalloweenPass />} />
-      </Routes>
+        {/* Közös jogi nyilatkozat minden oldalon */}
+        <div style={{ 
+          position: 'fixed', 
+          bottom: '10px', 
+          right: '15px', 
+          fontSize: '11px', 
+          color: 'rgba(255, 255, 255, 0.2)', /* Halvány átlátszó fehér */
+          pointerEvents: 'none', /* Ne zavarjon be a kattintásokba */
+          zIndex: 9999
+        }}>
+          Az oldal semmilyen formában nem áll kapcsolatban a SeeRPG szerverével.
+        </div>
+      </div>
     </BrowserRouter>
   );
 }
