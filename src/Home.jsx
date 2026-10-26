@@ -61,8 +61,7 @@ export default function Home() {
 
       {/* 💥 KÖZÉPSŐ TARTALOM (HERO) */}
       <div style={styles.hero}>
-        <h1 style={styles.title}>Válaszd ki az alkalmazást</h1>
-        <p style={styles.subtitle}>Kezeld a lekötéseidet profi szinten, kövesd nyomon a Halloween Pass fejlődésedet, vagy logold a kinyitott ládáidat.</p>
+        <h1 style={styles.title}>Jó mókázást!</h1>
       </div>
 
       {/* 🃏 ALKALMAZÁS KÁRTYÁK */}
