@@ -1,39 +1,69 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { auth, db } from "./firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
-export default function SeeRPGDashboard() {
+export default function Lekotes() {
   const navigate = useNavigate();
-
-  // --- ÁLLAPOTOK (LocalStorage betöltéssel) ---
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true); // Töltés állapot, hogy ne írja felül az adatbázist betöltés előtt
   
-  // 1. Kártya: PrimeInvest Hosszútáv
-  const [primeCapital, setPrimeCapital] = useState(
-    Number(localStorage.getItem("seeRpgPrimeCapital")) || 823207955
-  );
-  const [primeHours, setPrimeHours] = useState(
-    Number(localStorage.getItem("seeRpgPrimeHours")) || 12
-  );
+  // --- ÁLLAPOTOK (Alapértelmezett értékekkel) ---
+  const [primeCapital, setPrimeCapital] = useState(823207955);
+  const [primeHours, setPrimeHours] = useState(12);
+  const [targetStartCapital, setTargetStartCapital] = useState(823207955);
+  const [targetGoal, setTargetGoal] = useState(1000000000);
 
-  // 2. Kártya: Célkitűzés (ÚJ)
-  const [targetStartCapital, setTargetStartCapital] = useState(
-    Number(localStorage.getItem("seeRpgTargetStart")) || 823207955
-  );
-  const [targetGoal, setTargetGoal] = useState(
-    Number(localStorage.getItem("seeRpgTargetGoal")) || 1000000000
-  );
+  // --- 1. FIREBASE: FELHASZNÁLÓ ÉS ADATOK BETÖLTÉSE ---
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        // Ha be van jelentkezve, lekérjük a mentett adatait
+        const docRef = doc(db, "lekotesek", currentUser.uid);
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.primeCapital) setPrimeCapital(data.primeCapital);
+          if (data.primeHours) setPrimeHours(data.primeHours);
+          if (data.targetStartCapital) setTargetStartCapital(data.targetStartCapital);
+          if (data.targetGoal) setTargetGoal(data.targetGoal);
+        }
+      }
+      setLoading(false); // Betöltés kész
+    });
+    return () => unsubscribe();
+  }, []);
 
-  // --- LOCALSTORAGE MENTÉS ---
-  useEffect(() => localStorage.setItem("seeRpgPrimeCapital", primeCapital), [primeCapital]);
-  useEffect(() => localStorage.setItem("seeRpgPrimeHours", primeHours), [primeHours]);
-  useEffect(() => localStorage.setItem("seeRpgTargetStart", targetStartCapital), [targetStartCapital]);
-  useEffect(() => localStorage.setItem("seeRpgTargetGoal", targetGoal), [targetGoal]);
+  // --- 2. FIREBASE: AUTOMATIKUS MENTÉS VÁLTOZÁSKOR ---
+  useEffect(() => {
+    // Csak akkor mentünk, ha be van lépve és már betöltött az oldal
+    if (user && !loading) {
+      const saveData = async () => {
+        const docRef = doc(db, "lekotesek", user.uid);
+        await setDoc(docRef, {
+          primeCapital,
+          primeHours,
+          targetStartCapital,
+          targetGoal
+        }, { merge: true }); // A merge biztosítja, hogy csak frissít
+      };
+      saveData();
+    }
+  }, [primeCapital, primeHours, targetStartCapital, targetGoal, user, loading]);
 
-  // --- SZÁMÍTÁSOK: 1. KÁRTYA ---
+  const handleLogout = async () => {
+    await signOut(auth);
+    navigate('/');
+  };
+
+  // --- SZÁMÍTÁSOK ---
   const primeFinalBalance = Math.floor(primeCapital * Math.pow(1.006, primeHours));
   const primeProfit = primeFinalBalance - primeCapital;
   const primeCycles = (primeHours / 12).toFixed(1);
 
-  // --- SZÁMÍTÁSOK: 2. KÁRTYA ---
   let requiredHours = 0;
   let requiredCyclesExact = 0;
   let actualFinalBalance = 0;
@@ -41,7 +71,6 @@ export default function SeeRPGDashboard() {
   if (targetGoal > targetStartCapital && targetStartCapital > 0) {
     requiredHours = Math.log(targetGoal / targetStartCapital) / Math.log(1.006);
     requiredCyclesExact = requiredHours / 12;
-    
     const roundedCycles = Math.ceil(requiredCyclesExact);
     actualFinalBalance = Math.floor(targetStartCapital * Math.pow(1.006, roundedCycles * 12));
   }
@@ -67,36 +96,54 @@ export default function SeeRPGDashboard() {
 
   // --- STÍLUSOK ---
   const styles = {
-    container: { position: "relative", boxSizing: "border-box", fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", backgroundColor: "#1e1e24", color: "#d1d5db", padding: "40px 20px", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center" },
+    container: { position: "relative", boxSizing: "border-box", fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", backgroundColor: "#111216", color: "#d1d5db", padding: "100px 20px 40px", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center" },
+    navbar: { position: 'absolute', top: 0, left: 0, right: 0, padding: '20px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(17, 18, 22, 0.8)', backdropFilter: 'blur(10px)', zIndex: 1000 },
+    logo: { fontSize: '1.5rem', fontWeight: '900', letterSpacing: '2px', color: '#eeb32a', textShadow: '0 0 10px rgba(238, 179, 42, 0.3)', cursor: 'pointer', userSelect: 'none' },
+    authBtn: { padding: '8px 15px', backgroundColor: '#00b0f4', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.9rem' },
+    logoutBtn: { padding: '8px 15px', backgroundColor: 'transparent', color: '#ff4a4a', border: '1px solid #ff4a4a', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' },
     titleContainer: { textAlign: "center", marginBottom: "40px", marginTop: "20px" },
     titleSee: { color: "#eeb32a", textShadow: "2px 2px 0px #111, 4px 4px 0px rgba(0,0,0,0.4)", fontSize: "2.8rem", fontWeight: "900", letterSpacing: "1px" },
     titleRPG: { color: "#ffffff", textShadow: "2px 2px 0px #111, 4px 4px 0px rgba(0,0,0,0.4)", fontSize: "2.8rem", fontWeight: "900", letterSpacing: "1px" },
     titleText: { color: "#a1a5ab", textShadow: "1px 1px 2px #000", fontSize: "2.2rem", fontWeight: "bold" },
     grid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(380px, 1fr))", gap: "30px", maxWidth: "1000px", width: "100%" },
-    card: { boxSizing: "border-box", backgroundColor: "#292b2f", padding: "30px", borderRadius: "12px", boxShadow: "0 10px 20px rgba(0,0,0,0.4)", display: "flex", flexDirection: "column" },
-    cardTitle: { marginTop: 0, color: "#ffffff", fontSize: "1.2rem", borderBottom: "2px solid #40444b", paddingBottom: "15px", marginBottom: "25px", textTransform: "uppercase", fontWeight: "bold", letterSpacing: "1px", display: "flex", alignItems: "center", gap: "10px" },
+    card: { boxSizing: "border-box", backgroundColor: "#1e2128", padding: "30px", borderRadius: "12px", boxShadow: "0 15px 35px rgba(0,0,0,0.4)", display: "flex", flexDirection: "column" },
+    cardTitle: { marginTop: 0, color: "#ffffff", fontSize: "1.2rem", borderBottom: "2px solid rgba(255,255,255,0.05)", paddingBottom: "15px", marginBottom: "25px", textTransform: "uppercase", fontWeight: "bold", letterSpacing: "1px", display: "flex", alignItems: "center", gap: "10px" },
     inputGroup: { display: "flex", flexDirection: "column", marginBottom: "20px" },
     label: { marginBottom: "8px", fontSize: "0.95rem", color: "#b9bbbe", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px" },
-    input: { boxSizing: "border-box", padding: "12px 15px", borderRadius: "6px", border: "1px solid #202225", backgroundColor: "#40444b", color: "#fff", fontSize: "1.2rem", outline: "none", fontWeight: "bold", transition: "all 0.2s", width: "100%" },
+    input: { boxSizing: "border-box", padding: "12px 15px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.1)", backgroundColor: "#111216", color: "#fff", fontSize: "1.2rem", outline: "none", fontWeight: "bold", transition: "all 0.2s", width: "100%" },
     statRow: { display: "flex", justifyContent: "space-between", margin: "12px 0", fontSize: "1.1rem" },
-    highlightGreen: { color: "#43b581", fontWeight: "bold" },
-    highlightYellow: { color: "#eeb32a", fontWeight: "bold" },
+    highlightGreen: { color: "#4ade80", fontWeight: "bold" },
     highlightBlue: { color: "#00b0f4", fontWeight: "bold" },
-    divider: { height: "1px", backgroundColor: "#40444b", margin: "25px 0", border: "none" },
+    divider: { height: "1px", backgroundColor: "rgba(255,255,255,0.05)", margin: "25px 0", border: "none" },
     alertBox: { padding: "15px", borderRadius: "6px", marginTop: "15px", fontWeight: "bold", textAlign: "center", backgroundColor: "rgba(0, 176, 244, 0.1)", color: "#00b0f4", border: "1px solid rgba(0, 176, 244, 0.3)" },
-    footer: { textAlign: "center", marginTop: "50px", color: "#303338", fontSize: "2.5rem", fontWeight: "900", letterSpacing: "12px", textTransform: "uppercase", textShadow: "1px 1px 0px #111, 2px 2px 0px rgba(238, 179, 42, 0.1)", userSelect: "none" }
+    footer: { textAlign: "center", marginTop: "50px", color: "rgba(255,255,255,0.05)", fontSize: "2.5rem", fontWeight: "900", letterSpacing: "12px", textTransform: "uppercase" }
   };
+
+  if (loading) return <div style={{...styles.container, justifyContent: 'center'}}><h2>Adatok betöltése...</h2></div>;
 
   return (
     <div style={styles.container}>
       
-      {/* Vissza gomb a bal felső sarokban */}
-      <button 
-        onClick={() => navigate('/')} 
-        style={{ position: 'absolute', top: '20px', left: '20px', padding: '8px 15px', cursor: 'pointer', backgroundColor: '#333', color: 'white', border: 'none', borderRadius: '5px', zIndex: 1000 }}
-      >
-        ⬅ Home page
-      </button>
+      {/* 🚀 FELSŐ SÁV (NAVBAR) */}
+      <div style={styles.navbar}>
+        <div onClick={() => navigate('/')} style={styles.logo}>BARNI-SEERPG</div>
+        <div>
+          {user ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+              <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', padding: '6px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <span style={{ color: '#a1a5ab', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  Bejelentkezve: <b style={{ color: '#4ade80', fontSize: '1rem', marginLeft: '5px' }}>{user.email.split('@')[0]}</b>
+                </span>
+              </div>
+              <button onClick={handleLogout} style={styles.logoutBtn}>Kijelentkezés</button>
+            </div>
+          ) : (
+            <button onClick={() => navigate('/auth')} style={styles.authBtn}>
+              🔐 Bejelentkezés
+            </button>
+          )}
+        </div>
+      </div>
 
       <div style={styles.titleContainer}>
         <h1>
@@ -106,8 +153,8 @@ export default function SeeRPGDashboard() {
 
       <div style={styles.grid}>
         
-        {/* 1. KÁRTYA: PRIME INVEST HOSSZÚTÁVÚ KALKULÁTOR */}
-        <div style={{ ...styles.card, borderTop: "5px solid #43b581" }}>
+        {/* 1. KÁRTYA */}
+        <div style={{ ...styles.card, borderTop: "5px solid #4ade80" }}>
           <h2 style={styles.cardTitle}>📈 Hosszútávú Tervező</h2>
           
           <div style={styles.inputGroup}>
@@ -150,7 +197,7 @@ export default function SeeRPGDashboard() {
           </div>
         </div>
 
-        {/* 2. KÁRTYA: CÉLKITŰZÉS KALKULÁTOR */}
+        {/* 2. KÁRTYA */}
         <div style={{ ...styles.card, borderTop: "5px solid #00b0f4" }}>
           <h2 style={styles.cardTitle}>🎯 Célkitűzés Kalkulátor</h2>
           
@@ -195,7 +242,7 @@ export default function SeeRPGDashboard() {
                 </div>
               </>
             ) : (
-              <div style={{...styles.alertBox, backgroundColor: "rgba(67, 181, 129, 0.1)", color: "#43b581", border: "1px solid rgba(67, 181, 129, 0.3)"}}>
+              <div style={{...styles.alertBox, backgroundColor: "rgba(74, 222, 128, 0.1)", color: "#4ade80", border: "1px solid rgba(74, 222, 128, 0.3)"}}>
                 🎉 A célodat már el is érted!
               </div>
             )}
@@ -204,7 +251,6 @@ export default function SeeRPGDashboard() {
 
       </div>
       
-      {/* GIZDA FOOTER */}
       <div style={styles.footer}>
         @FICZABARNI
       </div>
