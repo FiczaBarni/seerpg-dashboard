@@ -64,7 +64,7 @@ export default function Home() {
         
         <div onClick={() => navigate('/lekotes')} style={styles.card('#4ade80')}>
           <div style={styles.cardIcon}>💰</div>
-          <h3 style={styles.cardTitle}>Lekötés</h3>
+          <h3 style={styles.cardTitle}>Lekötés ( elavult ) </h3>
         </div>
 
         <div onClick={() => navigate('/halloween-pass')} style={styles.card('orange')}>
