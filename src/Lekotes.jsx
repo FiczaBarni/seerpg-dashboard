@@ -147,7 +147,7 @@ export default function Lekotes() {
 
       <div style={styles.titleContainer}>
         <h1>
-          🏦 <span style={styles.titleSee}>See</span><span style={styles.titleRPG}>RPG</span> <span style={styles.titleText}>Lekötés</span>
+          🏦 <span style={styles.titleSee}>See</span><span style={styles.titleRPG}>RPG</span> <span style={styles.titleText}>Lekötés ( elavult )</span>
         </h1>
       </div>
 

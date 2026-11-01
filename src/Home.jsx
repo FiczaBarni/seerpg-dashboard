@@ -59,11 +59,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 💥 KÖZÉPSŐ TARTALOM (HERO) */}
-      <div style={styles.hero}>
-        <h1 style={styles.title}>Jó mókázást!</h1>
-      </div>
-
       {/* 🃏 ALKALMAZÁS KÁRTYÁK */}
       <div style={styles.cardContainer}>
         
