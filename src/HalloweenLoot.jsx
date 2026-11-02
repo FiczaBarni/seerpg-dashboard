@@ -124,18 +124,28 @@ export default function HalloweenLoot() {
   const [loot, setLoot] = useState(generateInitialLoot());
   const [recentOpens, setRecentOpens] = useState([]);
 
-  // --- FIREBASE: ADATOK BETÖLTÉSE ---
+  // --- FIREBASE: ADATOK BETÖLTÉSE (Hibatűrő mód) ---
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        const docRef = doc(db, "lootbox", currentUser.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists() && docSnap.data().loot) {
-          setLoot(prev => ({ ...prev, ...docSnap.data().loot }));
-          setRecentOpens(docSnap.data().recentOpens || []);
+        try {
+          const docRef = doc(db, "lootbox", currentUser.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.loot) {
+              setLoot(prev => ({ ...prev, ...data.loot }));
+            }
+            if (data.recentOpens && Array.isArray(data.recentOpens)) {
+              setRecentOpens(data.recentOpens);
+            }
+          }
+        } catch (error) {
+          console.error("Hiba a Firebase letöltésekor (nézd meg a Rules-t!):", error);
         }
       }
+      // Ez most már akkor is lefut és eltünteti a töltőképernyőt, ha a Firebase hibát dobott!
       setLoading(false);
     });
     return () => unsubscribe();
@@ -145,8 +155,12 @@ export default function HalloweenLoot() {
   useEffect(() => {
     if (user && !loading) {
       const saveData = async () => {
-        const docRef = doc(db, "lootbox", user.uid);
-        await setDoc(docRef, { loot, recentOpens }, { merge: true });
+        try {
+          const docRef = doc(db, "lootbox", user.uid);
+          await setDoc(docRef, { loot, recentOpens }, { merge: true });
+        } catch (error) {
+          console.error("Hiba a mentésnél:", error);
+        }
       };
       saveData();
     }
@@ -154,14 +168,12 @@ export default function HalloweenLoot() {
 
   const handleIncrement = (idKey) => {
     setLoot((prev) => ({ ...prev, [idKey]: (prev[idKey] || 0) + 1 }));
-    // Hozzáadjuk a listához anélkül, hogy kiszűrnénk a meglévőket (engedjük a duplikációt)
     setRecentOpens((prev) => [idKey, ...prev].slice(0, 8));
   };
 
   const handleDecrement = (idKey) => {
     if (loot[idKey] > 0) {
       setLoot((prev) => ({ ...prev, [idKey]: prev[idKey] - 1 }));
-      // Ha visszavesszük (félrekattintás), akkor kiveszünk egyet a recent listából is
       setRecentOpens((prev) => {
         const index = prev.indexOf(idKey);
         if (index !== -1) {
@@ -185,7 +197,7 @@ export default function HalloweenLoot() {
     setExpandedCats(prev => ({ ...prev, [catId]: !prev[catId] }));
   };
 
-  const totalOpened = Object.values(loot).reduce((acc, curr) => acc + curr, 0);
+  const totalOpened = Object.values(loot).reduce((acc, curr) => acc + (typeof curr === 'number' ? curr : 0), 0);
 
   const filteredCategories = itemCategories.map(cat => ({
     ...cat,
@@ -255,7 +267,7 @@ export default function HalloweenLoot() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
               <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', padding: '6px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
                 <span style={{ color: '#a1a5ab', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                  Bejelentkezve: <b style={{ color: '#a78bfa', fontSize: '1rem', marginLeft: '5px' }}>{user.email.split('@')[0]}</b>
+                  Bejelentkezve: <b style={{ color: '#a78bfa', fontSize: '1rem', marginLeft: '5px' }}>{user.email ? user.email.split('@')[0] : 'Játékos'}</b>
                 </span>
               </div>
               <button onClick={handleLogout} style={styles.logoutBtn}>Kijelentkezés</button>
