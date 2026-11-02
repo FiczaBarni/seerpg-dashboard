@@ -152,21 +152,26 @@ export default function HalloweenLoot() {
     }
   }, [loot, recentOpens, user, loading]);
 
-  const handleLogout = async () => {
-    await signOut(auth);
-    navigate('/');
-  };
-
   const handleIncrement = (idKey) => {
     setLoot((prev) => ({ ...prev, [idKey]: (prev[idKey] || 0) + 1 }));
-    setRecentOpens((prev) => {
-      const filtered = prev.filter(item => item !== idKey);
-      return [idKey, ...filtered].slice(0, 8);
-    });
+    // Hozzáadjuk a listához anélkül, hogy kiszűrnénk a meglévőket (engedjük a duplikációt)
+    setRecentOpens((prev) => [idKey, ...prev].slice(0, 8));
   };
 
   const handleDecrement = (idKey) => {
-    setLoot((prev) => ({ ...prev, [idKey]: Math.max(0, (prev[idKey] || 0) - 1) }));
+    if (loot[idKey] > 0) {
+      setLoot((prev) => ({ ...prev, [idKey]: prev[idKey] - 1 }));
+      // Ha visszavesszük (félrekattintás), akkor kiveszünk egyet a recent listából is
+      setRecentOpens((prev) => {
+        const index = prev.indexOf(idKey);
+        if (index !== -1) {
+          const newRecent = [...prev];
+          newRecent.splice(index, 1);
+          return newRecent;
+        }
+        return prev;
+      });
+    }
   };
 
   const handleReset = () => {
@@ -288,11 +293,11 @@ export default function HalloweenLoot() {
         <div style={styles.recentPanel}>
           <h3 style={styles.recentTitle}>Utolsó megnyitott tárgyak</h3>
           <div style={styles.recentGrid}>
-            {recentOpens.map(idKey => {
+            {recentOpens.map((idKey, index) => {
               const item = itemDictionary[idKey];
               if (!item) return null;
               return (
-                <div key={`recent_${idKey}`} style={styles.recentCard}>
+                <div key={`recent_${idKey}_${index}`} style={styles.recentCard}>
                   <img 
                     src={`/items/${item.id}_${item.name.replace(/[\/\\:*?"<>|]/g, '_')}.png`} 
                     alt={item.name} 

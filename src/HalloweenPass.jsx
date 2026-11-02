@@ -130,7 +130,7 @@ export default function HalloweenPass() {
       </div>
 
       <div style={styles.titleContainer}>
-        <h1 style={styles.titleMain}>🎃 Halloween Pass Kalkulátor</h1>
+        <h1 style={styles.titleMain}> Halloween Pass Kalkulátor</h1>
       </div>
 
       <div style={styles.grid}>
