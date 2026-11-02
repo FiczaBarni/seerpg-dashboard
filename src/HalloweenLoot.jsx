@@ -4,6 +4,38 @@ import { auth, db } from "./firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
+// --- HIBA-ELFOGÓ (ERROR BOUNDARY) ---
+// Ez megakadályozza, hogy az oldal teljesen befagyjon/eltűnjön egy rejtett hiba esetén!
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+  componentDidCatch(error, errorInfo) {
+    this.setState({ hasError: true, error: error, errorInfo: errorInfo });
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '50px', backgroundColor: '#111216', color: 'white', minHeight: '100vh', textAlign: 'center', fontFamily: 'sans-serif' }}>
+          <h1 style={{ color: '#ff4a4a' }}>⚠️ Rendszerhiba történt!</h1>
+          <p style={{ color: '#a1a5ab', fontSize: '1.2rem' }}>A Firebase-ben lévő korábbi mentésed összeomlasztotta az oldalt.</p>
+          <div style={{ backgroundColor: '#1e2128', padding: '20px', borderRadius: '10px', color: '#ff4a4a', margin: '20px auto', maxWidth: '800px', textAlign: 'left', overflowX: 'auto', border: '1px solid #ff4a4a' }}>
+            <strong>Hiba oka:</strong> {this.state.error && this.state.error.toString()}
+          </div>
+          <button 
+            onClick={() => window.location.reload()} 
+            style={{ padding: '12px 25px', backgroundColor: '#eeb32a', color: '#000', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.1rem', marginTop: '10px' }}
+          >
+            🔄 Oldal Újratöltése
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // --- KATEGÓRIÁK ÉS TÁRGYAK ADATBÁZISA ---
 const itemCategories = [
   {
@@ -112,7 +144,8 @@ const generateInitialLoot = () => {
   return initial;
 };
 
-export default function HalloweenLoot() {
+// Ezt a komponenst rejtjük az ErrorBoundary mögé
+function HalloweenLootApp() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -124,7 +157,7 @@ export default function HalloweenLoot() {
   const [loot, setLoot] = useState(generateInitialLoot());
   const [recentOpens, setRecentOpens] = useState([]);
 
-  // --- FIREBASE: BIZTONSÁGOS LETÖLTÉS (GOLYÓÁLLÓ) ---
+  // --- FIREBASE: BIZTONSÁGOS LETÖLTÉS ---
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
@@ -136,7 +169,6 @@ export default function HalloweenLoot() {
           if (docSnap.exists()) {
             const data = docSnap.data();
             
-            // Kőkemény tisztítás: Bármi jön, csak számként fogadjuk el!
             if (data.loot && typeof data.loot === 'object') {
               setLoot(prev => {
                 const safeLoot = { ...prev };
@@ -206,18 +238,20 @@ export default function HalloweenLoot() {
     setExpandedCats(prev => ({ ...prev, [catId]: !prev[catId] }));
   };
 
-  // Hibatűrő számítások
-  const totalOpened = Object.values(loot).reduce((acc, curr) => acc + (Number(curr) || 0), 0);
+  // Biztonságos renderelési változók (Ha ide ér, már biztosan nem fog összeomlani)
+  const totalOpened = Object.values(loot || {}).reduce((acc, curr) => acc + (Number(curr) || 0), 0);
 
   const filteredCategories = itemCategories.map(cat => ({
     ...cat,
-    items: cat.items.filter(item => 
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      item.id.toString().includes(searchTerm)
-    )
+    items: cat.items.filter(item => {
+      const itemName = item.name || "";
+      const itemId = item.id ? item.id.toString() : "";
+      const search = searchTerm || "";
+      return itemName.toLowerCase().includes(search.toLowerCase()) || itemId.includes(search);
+    })
   })).filter(cat => cat.items.length > 0);
 
-  const openedItemsList = Object.entries(loot)
+  const openedItemsList = Object.entries(loot || {})
     .filter(([idKey, count]) => (Number(count) || 0) > 0 && itemDictionary[idKey])
     .map(([idKey, count]) => ({ ...itemDictionary[idKey], count: Number(count), idKey }));
 
@@ -278,7 +312,7 @@ export default function HalloweenLoot() {
               <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', padding: '6px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
                 <span style={{ color: '#a1a5ab', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
                   Bejelentkezve: <b style={{ color: '#a78bfa', fontSize: '1rem', marginLeft: '5px' }}>
-                    {user?.email ? String(user.email).split('@')[0] : 'Játékos'}
+                    {(user && user.email) ? String(user.email).split('@')[0] : 'Játékos'}
                   </b>
                 </span>
               </div>
@@ -320,10 +354,11 @@ export default function HalloweenLoot() {
             {recentOpens.map((idKey, index) => {
               const item = itemDictionary[idKey];
               if (!item) return null;
+              const safeName = item.name ? item.name.replace(/[\/\\:*?"<>|]/g, '_') : 'ismeretlen';
               return (
                 <div key={`recent_${idKey}_${index}`} style={styles.recentCard}>
                   <img 
-                    src={`/items/${item.id}_${item.name.replace(/[\/\\:*?"<>|]/g, '_')}.png`} 
+                    src={`/items/${item.id}_${safeName}.png`} 
                     alt={item.name} 
                     style={styles.recentImg} 
                     onError={(e) => { e.target.style.display = 'none'; }} 
@@ -364,10 +399,11 @@ export default function HalloweenLoot() {
                 <div style={styles.grid}>
                   {cat.items.map((item) => {
                     const idKey = `item_${item.id}`;
+                    const safeName = item.name ? item.name.replace(/[\/\\:*?"<>|]/g, '_') : 'ismeretlen';
                     return (
                       <div key={idKey} style={styles.itemCard}>
                         <img 
-                          src={`/items/${item.id}_${item.name.replace(/[\/\\:*?"<>|]/g, '_')}.png`} 
+                          src={`/items/${item.id}_${safeName}.png`} 
                           alt={item.name} 
                           style={styles.itemImage} 
                           onError={(e) => { e.target.style.display = 'none'; }} 
@@ -418,20 +454,32 @@ export default function HalloweenLoot() {
             Eddig Kinyitott Tárgyaid
           </h3>
           <div style={styles.inventoryGrid}>
-            {openedItemsList.map(item => (
-              <div key={`inv_${item.idKey}`} style={styles.inventoryItemBox}>
-                <img 
-                  src={`/items/${item.id}_${item.name.replace(/[\/\\:*?"<>|]/g, '_')}.png`} 
-                  alt={item.name} 
-                  style={{ width: '45px', height: '45px', objectFit: 'contain' }} 
-                  onError={(e) => { e.target.style.display = 'none'; }} 
-                />
-                <div style={styles.inventoryBadge}>{item.count}</div>
-              </div>
-            ))}
+            {openedItemsList.map(item => {
+              const safeName = item.name ? item.name.replace(/[\/\\:*?"<>|]/g, '_') : 'ismeretlen';
+              return (
+                <div key={`inv_${item.idKey}`} style={styles.inventoryItemBox}>
+                  <img 
+                    src={`/items/${item.id}_${safeName}.png`} 
+                    alt={item.name} 
+                    style={{ width: '45px', height: '45px', objectFit: 'contain' }} 
+                    onError={(e) => { e.target.style.display = 'none'; }} 
+                  />
+                  <div style={styles.inventoryBadge}>{item.count}</div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+// Csomagoljuk be az egész alkalmazást a Hiba-elfogóba!
+export default function HalloweenLoot() {
+  return (
+    <ErrorBoundary>
+      <HalloweenLootApp />
+    </ErrorBoundary>
   );
 }
