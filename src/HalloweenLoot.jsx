@@ -243,4 +243,195 @@ export default function HalloweenLoot() {
     addBtnOverlay: { backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '5px', color: '#a1a5ab', width: '100%', padding: '4px 0', cursor: 'pointer', fontSize: '0.85rem', transition: 'all 0.2s' },
 
     categoryContainer: { width: '100%', maxWidth: '1000px', marginBottom: '15px' },
-    categoryHeader: (isOpen, color) => ({ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 25px', backgroundColor: isOpen ? '#1e
+    categoryHeader: (isOpen, color) => ({ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 25px', backgroundColor: isOpen ? '#1e2128' : '#15171c', borderLeft: `5px solid ${color}`, borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s ease', userSelect: 'none' }),
+    categoryTitle: { margin: 0, fontSize: '1.2rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' },
+    
+    grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "12px", padding: "20px 0", marginTop: "5px" },
+    
+    itemCard: { backgroundColor: "#15171c", padding: "12px 10px", borderRadius: "8px", textAlign: "center", border: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" },
+    itemImage: { width: "60px", height: "60px", objectFit: "contain", dropShadow: "0 5px 10px rgba(0,0,0,0.5)" },
+    itemName: { fontSize: "0.8rem", fontWeight: "600", color: "#a1a5ab", margin: 0, minHeight: "32px", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center" },
+    
+    counterRow: { display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", backgroundColor: "#1e2128", borderRadius: "6px", padding: "2px 6px", marginTop: "auto" },
+    btnStyle: { backgroundColor: "transparent", border: "none", color: "#8b929e", fontSize: "1.1rem", cursor: "pointer", width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", transition: "color 0.2s" },
+    countBox: { fontSize: "1.1rem", fontWeight: "bold", color: "#fff", margin: "0 5px" },
+    
+    summaryCard: { backgroundColor: "#1e2128", borderTop: "5px solid #eeb32a", padding: "20px", borderRadius: "12px", width: "100%", maxWidth: "800px", textAlign: "center", boxShadow: "0 15px 35px rgba(0,0,0,0.4)", marginTop: "20px" },
+    resetBtn: { marginTop: "15px", padding: "8px 18px", backgroundColor: "transparent", color: "#ff4a4a", border: "1px solid #ff4a4a", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" },
+    
+    inventoryContainer: { width: '100%', maxWidth: '1000px', marginTop: '40px', backgroundColor: '#15171c', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' },
+    inventoryGrid: { display: 'flex', flexWrap: 'wrap', gap: '15px', justifyContent: 'center', marginTop: '15px' },
+    inventoryItemBox: { position: 'relative', width: '65px', height: '65px', backgroundColor: '#1e2128', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '5px' },
+    inventoryBadge: { position: 'absolute', top: '-6px', right: '-6px', backgroundColor: '#9ca3af', color: '#000', width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 'bold', boxShadow: '0 2px 5px rgba(0,0,0,0.5)' }
+  };
+
+  if (loading) return <div style={{...styles.container, justifyContent: 'center'}}><h2>Adatok betöltése...</h2></div>;
+
+  return (
+    <div style={styles.container}>
+      
+      <div style={styles.navbar}>
+        <div onClick={() => navigate('/')} style={styles.logo}>BARNI-SEERPG</div>
+        <div>
+          {user ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+              <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', padding: '6px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <span style={{ color: '#a1a5ab', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  Bejelentkezve: <b style={{ color: '#a78bfa', fontSize: '1rem', marginLeft: '5px' }}>
+                    {user?.email ? String(user.email).split('@')[0] : 'Játékos'}
+                  </b>
+                </span>
+              </div>
+              <button onClick={handleLogout} style={styles.logoutBtn}>Kijelentkezés</button>
+            </div>
+          ) : (
+            <button onClick={() => navigate('/auth')} style={styles.authBtn}>Bejelentkezés</button>
+          )}
+        </div>
+      </div>
+
+      <div style={styles.titleContainer}>
+        <h1 style={styles.titleMain}>Ládanyitás Logger</h1>
+      </div>
+
+      <div style={styles.searchContainer}>
+        <input 
+          type="text" 
+          placeholder="Keresés név vagy ID alapján (pl. fánk, 308)..." 
+          value={searchTerm} 
+          onChange={(e) => setSearchTerm(e.target.value)} 
+          style={styles.searchInput} 
+        />
+        <label style={styles.checkboxLabel}>
+          <input 
+            type="checkbox" 
+            checked={showRecentOpens} 
+            onChange={(e) => setShowRecentOpens(e.target.checked)} 
+            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+          />
+          Utolsó nyitások mutatása
+        </label>
+      </div>
+
+      {showRecentOpens && recentOpens.length > 0 && (
+        <div style={styles.recentPanel}>
+          <h3 style={styles.recentTitle}>Utolsó megnyitott tárgyak</h3>
+          <div style={styles.recentGrid}>
+            {recentOpens.map((idKey, index) => {
+              const item = itemDictionary[idKey];
+              if (!item) return null;
+              return (
+                <div key={`recent_${idKey}_${index}`} style={styles.recentCard}>
+                  <img 
+                    src={`/items/${item.id}_${item.name.replace(/[\/\\:*?"<>|]/g, '_')}.png`} 
+                    alt={item.name} 
+                    style={styles.recentImg} 
+                    onError={(e) => { e.target.style.display = 'none'; }} 
+                  />
+                  <button 
+                    onClick={() => handleIncrement(idKey)} 
+                    style={styles.addBtnOverlay}
+                    onMouseOver={(e) => { e.target.style.color = '#fff'; e.target.style.borderColor = '#4ade80'; }}
+                    onMouseOut={(e) => { e.target.style.color = '#a1a5ab'; e.target.style.borderColor = 'rgba(255,255,255,0.2)'; }}
+                  >
+                    +1
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {filteredCategories.length === 0 ? (
+        <h3 style={{ color: "#ff4a4a" }}>Nincs találat a keresésre.</h3>
+      ) : (
+        filteredCategories.map((cat) => {
+          const isOpen = searchTerm !== "" || expandedCats[cat.id];
+          
+          return (
+            <div key={cat.id} style={styles.categoryContainer}>
+              <div style={styles.categoryHeader(isOpen, cat.color)} onClick={() => toggleCategory(cat.id)}>
+                <h2 style={styles.categoryTitle}>
+                  {cat.name}
+                </h2>
+                <span style={{ color: '#a1a5ab', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' }}>
+                  ▼
+                </span>
+              </div>
+
+              {isOpen && (
+                <div style={styles.grid}>
+                  {cat.items.map((item) => {
+                    const idKey = `item_${item.id}`;
+                    return (
+                      <div key={idKey} style={styles.itemCard}>
+                        <img 
+                          src={`/items/${item.id}_${item.name.replace(/[\/\\:*?"<>|]/g, '_')}.png`} 
+                          alt={item.name} 
+                          style={styles.itemImage} 
+                          onError={(e) => { e.target.style.display = 'none'; }} 
+                        />
+                        <h3 style={styles.itemName}>{item.name}</h3>
+                        
+                        <div style={styles.counterRow}>
+                          <button 
+                            onClick={() => handleDecrement(idKey)} 
+                            style={styles.btnStyle}
+                            onMouseOver={(e) => e.target.style.color = '#ff4a4a'}
+                            onMouseOut={(e) => e.target.style.color = '#8b929e'}
+                          >
+                            −
+                          </button>
+                          <div style={styles.countBox}>{Number(loot[idKey]) || 0}</div>
+                          <button 
+                            onClick={() => handleIncrement(idKey)} 
+                            style={styles.btnStyle}
+                            onMouseOver={(e) => e.target.style.color = '#4ade80'}
+                            onMouseOut={(e) => e.target.style.color = '#8b929e'}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })
+      )}
+
+      <div style={styles.summaryCard}>
+        <p style={{ fontSize: "1.1rem", color: "#b9bbbe", margin: 0 }}>
+          Eddig kinyitott ládák száma: <b style={{ color: "white", fontSize: "1.4rem", marginLeft: "8px" }}>{totalOpened} db</b>
+        </p>
+        <button onClick={handleReset} style={styles.resetBtn}>
+          Nyitások Lenullázása
+        </button>
+      </div>
+
+      {openedItemsList.length > 0 && (
+        <div style={styles.inventoryContainer}>
+          <h3 style={{ margin: '0 0 10px 0', color: '#eeb32a', textAlign: 'center', fontSize: '1.2rem', textTransform: 'uppercase' }}>
+            Eddig Kinyitott Tárgyaid
+          </h3>
+          <div style={styles.inventoryGrid}>
+            {openedItemsList.map(item => (
+              <div key={`inv_${item.idKey}`} style={styles.inventoryItemBox}>
+                <img 
+                  src={`/items/${item.id}_${item.name.replace(/[\/\\:*?"<>|]/g, '_')}.png`} 
+                  alt={item.name} 
+                  style={{ width: '45px', height: '45px', objectFit: 'contain' }} 
+                  onError={(e) => { e.target.style.display = 'none'; }} 
+                />
+                <div style={styles.inventoryBadge}>{item.count}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
